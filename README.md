@@ -3,7 +3,7 @@
 This program is designed to simulate simple artificial life using basic rules of attraction and repulsion between atom-like particles.
 These rules create intricate, self-organizing patterns that resemble life-like forms.
 
-To explore different patterns, you can click the 'RND' button, and you can fine-tune the parameters using the '+', '-', '+/-', and 'TRANS' buttons. Here are their descriptions:
+To explore different patterns, you can click the 'RND' button, and you can fine-tune the parameters using the `+`, `-`, `+/-P, and `TRANS` buttons. Here are their descriptions:
 
 - `+` : Increases all parameters by 10%.
 - `-` : Decreases all parameters by 10%.
