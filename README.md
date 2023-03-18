@@ -10,6 +10,8 @@ To explore different patterns, you can click the 'RND' button, and you can fine-
 - `+/-` : Inverses all parameters (positive values become negative and vice versa).
 - `TRANS`: Transposes all parameters in a clockwise direction.
 
+Thanks to https://github.com/hunar4321/particle-life
+
 ## Live Demo
 https://maloninc.github.io/p-life/
 
