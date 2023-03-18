@@ -1,0 +1,364 @@
+<!--
+    P-Life (Particle Life)
+    Thanks to https://github.com/hunar4321/particle-life
+-->
+<html>
+    <head>
+        <title>P-Life</title>
+        <!-- UIkit CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.16.6/dist/css/uikit.min.css" />
+
+        <style>
+            .parameter.value {
+                width: 100px;
+            }
+            .parameter.label {
+                font-size: .875rem;
+                font-weight: 400;
+                color: #999;
+                text-transform: uppercase;
+            }
+            .canvas {
+                float: left;
+            }
+            .controller {
+                margin-top: 40px;
+                margin-left: 30px;
+                float: left;
+            }
+        </style>
+        
+        <!-- UIkit JS -->
+        <script src="https://cdn.jsdelivr.net/npm/uikit@3.16.6/dist/js/uikit.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/uikit@3.16.6/dist/js/uikit-icons.min.js"></script>
+    </head>
+
+    <body class="uk-background-secondary">
+        <div class="canvas">
+            <canvas id="life" width="500" height="500"></canvas>
+        </div>
+        <div class="controller uk-light">
+            <table class="uk-table">
+                <caption>Parameters</caption>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>red</th>
+                        <th>yellow</th>
+                        <th>green</th>
+                        <th>white</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="parameter label">red</td>
+                        <td><input id="red-red"       class="uk-input parameter value" type="number" value="-0.10" step="0.01"></input></td>
+                        <td><input id="red-yellow"    class="uk-input parameter value" type="number" value="-0.01" step="0.01"></input></td>
+                        <td><input id="red-green"     class="uk-input parameter value" type="number" value="-0.20" step="0.01"></input></td>
+                        <td><input id="red-white"     class="uk-input parameter value" type="number" value="-0.01" step="0.01"></input></td>
+                    </tr>
+                    <tr>
+                        <td class="parameter label">yellow</td>
+                        <td><input id="yellow-red"    class="uk-input parameter value" type="number" value="0.01" step="0.01"></input></td>
+                        <td><input id="yellow-yellow" class="uk-input parameter value" type="number" value="0.15" step="0.01"></input></td>
+                        <td><input id="yellow-green"  class="uk-input parameter value" type="number" value="-0.20" step="0.01"></input></td>
+                        <td><input id="yellow-white"  class="uk-input parameter value" type="number" value="0.10" step="0.01"></input></td>
+                    </tr>
+                    <tr>
+                        <td class="parameter label">green</td>
+                        <td><input id="green-red"     class="uk-input parameter value" type="number" value="-0.15" step="0.01"></input></td>
+                        <td><input id="green-yellow"  class="uk-input parameter value" type="number" value="0.20" step="0.01"></input></td>
+                        <td><input id="green-green"   class="uk-input parameter value" type="number" value="-0.20" step="0.01"></input></td>
+                        <td><input id="green-white"   class="uk-input parameter value" type="number" value="0.20" step="0.01"></input></td>
+                    </tr>
+                    <tr>
+                        <td class="parameter label">white</td>
+                        <td><input id="white-red"     class="uk-input parameter value" type="number" value="-0.05" step="0.01"></input></td>
+                        <td><input id="white-yellow"  class="uk-input parameter value" type="number" value="-0.10" step="0.01"></input></td>
+                        <td><input id="white-green"   class="uk-input parameter value" type="number" value="0.10" step="0.01"></input></td>
+                        <td><input id="white-white"   class="uk-input parameter value" type="number" value="0.10" step="0.01"></input></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="uk-button uk-button-default" onclick="download();">Download</button>
+            <button class="uk-button uk-button-default" onclick="randomize();">Rnd</button>
+            <button class="uk-button uk-button-default" onclick="multiply(1.1);">+</button>
+            <button class="uk-button uk-button-default" onclick="multiply(0.9);">-</button>
+            <button class="uk-button uk-button-default" onclick="multiply(-1);">+/-</button>
+            <button class="uk-button uk-button-default" onclick="transpose();">TRANS</button>
+        </div>
+    </body>
+
+    <script>
+        const params = new URLSearchParams(location.hash.replace('#', ''))
+        document.querySelector('#red-red').value = params.get('red-red')             || -0.10
+        document.querySelector('#red-yellow').value = params.get('red-yellow')       || -0.01
+        document.querySelector('#red-green').value = params.get('red-green')         || -0.20
+        document.querySelector('#red-white').value = params.get('red-white')         || -0.01
+
+        document.querySelector('#yellow-red').value = params.get('yellow-red')       || 0.01
+        document.querySelector('#yellow-yellow').value = params.get('yellow-yellow') || 0.15
+        document.querySelector('#yellow-green').value = params.get('yellow-green')   || -0.20
+        document.querySelector('#yellow-white').value = params.get('yellow-white')   || 0.10
+
+        document.querySelector('#green-red').value = params.get('green-red')         || -0.15
+        document.querySelector('#green-yellow').value = params.get('green-yellow')   || 0.20
+        document.querySelector('#green-green').value = params.get('green-green')     || -0.20
+        document.querySelector('#green-white').value = params.get('green-white')     || 0.20
+
+        document.querySelector('#white-red').value = params.get('white-red')         || -0.05
+        document.querySelector('#white-yellow').value = params.get('white-yellow')   || -0.10
+        document.querySelector('#white-green').value = params.get('white-green')     || 0.10
+        document.querySelector('#white-white').value = params.get('white-white')     || 0.10
+
+        Math.s_random = {}
+        Math.s_random.seed = (function me(s) {
+            // Xorshift128 (init seed with Xorshift32)
+            s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
+            let x = 123456789 ^ s;
+            s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
+            let y = 362436069 ^ s;
+            s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
+            let z = 521288629 ^ s;
+            s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
+            let w = 88675123 ^ s;
+            let t;
+
+            Math.s_random = function () {
+                t = x ^ (x << 11);
+                x = y; y = z; z = w;
+                // >>>0 means 'cast to uint32'
+                w = ((w ^ (w >>> 19)) ^ (t ^ (t >>> 8))) >>> 0;
+                return w / 0x100000000;
+            };
+            Math.s_random.seed = me;
+            return me;
+        })(0);
+        Math.s_random.seed(1);
+
+        const numOfParticles = 800
+        const canvasSize = 800
+        const particleSize = 1
+        const maxDistance = 80
+        let   step = BigInt(0)
+
+        const canvas = document.getElementById("life")
+        canvas.width = canvasSize
+        canvas.height = canvasSize
+        const m = document.getElementById("life").getContext("2d")
+
+        const drawRect = (x, y, c, s) => {
+            m.fillStyle = c
+            m.fillRect(x, y, s, s)
+        }
+        const drawCircle = (x, y, c, s) => {
+            m.fillStyle = c
+            m.beginPath();
+            m.arc(x, y, s, 0, 2 * Math.PI);
+            m.closePath();
+            m.fill();
+        }
+        const atoms = []
+        const atom = (x, y, c) => {
+            return { x: x, y: y, vx: 0, vy: 0, color: c }
+        }
+        const random = () => {
+            return Math.s_random() * canvasSize
+        }
+        const create = (number, color) => {
+            group = []
+            for (let i = 0; i < number; i++) {
+                group.push(atom(random(), random(), color))
+                atoms.push(group[i])
+            }
+            return group
+        }
+        const rule = (atoms1, atoms2, g) => {
+            for (const a of atoms1) {
+                let fx = 0
+                let fy = 0
+                for (const b of atoms2) {
+                    const dx = a.x - b.x
+                    const dy = a.y - b.y
+                    const d = Math.sqrt(dx * dx + dy * dy)
+                    if (d > 0 && d < maxDistance) {
+                        const F = (g * 1) / d
+                        fx += F * dx
+                        fy += F * dy
+                    }
+                }
+                a.vx = (a.vx + fx) * 0.5
+                a.vy = (a.vy + fy) * 0.5
+                a.x += a.vx
+                a.y += a.vy
+                if (a.x <= 0 || a.x >= canvasSize) { a.vx *= -1; }
+                if (a.y <= 0 || a.y >= canvasSize) { a.vy *= -1; }
+            }
+        }
+        const red = create(numOfParticles, "red")
+        const yellow = create(numOfParticles, "yellow")
+        const green  = create(numOfParticles, "green")
+        const white  = create(numOfParticles, "white")
+
+        const update = () => {
+            rule(red, red,        Number(document.querySelector('#red-red').value))       // -0.10
+            rule(red, yellow,     Number(document.querySelector('#red-yellow').value))    // -0.01
+            rule(red, green,      Number(document.querySelector('#red-green').value))     // -0.20
+            rule(red, white,      Number(document.querySelector('#red-white').value))     // -0.01
+
+            rule(yellow, red,     Number(document.querySelector('#yellow-red').value))    // 0.01
+            rule(yellow, yellow,  Number(document.querySelector('#yellow-yellow').value)) // 0.15
+            rule(yellow, green,   Number(document.querySelector('#yellow-green').value))  // -0.20
+            rule(yellow, white,   Number(document.querySelector('#yellow-white').value))  // 0.10
+
+            rule(green,  red,     Number(document.querySelector('#green-red').value))     // -0.15
+            rule(green,  yellow,  Number(document.querySelector('#green-yellow').value))  // 0.20
+            rule(green, green,    Number(document.querySelector('#green-green').value))   // -0.20
+            rule(green,  white,   Number(document.querySelector('#green-white').value))   // 0.20
+
+            rule(white,  red,     Number(document.querySelector('#white-red').value))     // -0.05
+            rule(white,  green,   Number(document.querySelector('#white-green').value))   // -0.10
+            rule(white,  yellow,  Number(document.querySelector('#white-yellow').value))  // 0.10
+            rule(white,  white,   Number(document.querySelector('#white-white').value))   // 0.10
+
+            m.clearRect(0, 0, canvasSize, canvasSize)
+            drawRect(0, 0, "black", canvasSize)
+            for (i = 0; i < atoms.length; i++) {
+                drawCircle(atoms[i].x, atoms[i].y, atoms[i].color, particleSize)
+            }
+
+            requestAnimationFrame(update)
+
+            step += 1n
+            m.fillStyle = 'white'
+            m.font = '16px sans-serif'
+            m.fillText(`Step:${step}`, 10, 20);
+        }
+        update()
+
+        document.querySelectorAll('.parameter.value').forEach(el => {
+            el.addEventListener('input', () => {
+                location.hash = createHash()
+            })
+        })
+
+        const createHash = () => {
+            return Array.from(document.querySelectorAll('.parameter.value')).map(el => `${el.id}=${el.value}`).join('&')
+        }
+
+
+        //
+        // Tools
+        //
+        const download = () => {
+            const canvas = document.querySelector('#life')
+            const a = document.createElement("a");
+            a.href = canvas.toDataURL("image/png", 0.75);
+            a.download = `particle-life-image-${createHash().replaceAll('red','r').replaceAll('yellow', 'y').replaceAll('green', 'g').replaceAll('white', 'w') }.png`
+            a.click();
+        }
+
+        const randomize = () => {
+            document.querySelector('#red-red').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#red-yellow').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#red-green').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#red-white').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+
+            document.querySelector('#yellow-red').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#yellow-yellow').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#yellow-green').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#yellow-white').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+
+            document.querySelector('#green-red').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#green-yellow').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#green-green').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#green-white').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+
+            document.querySelector('#white-red').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#white-yellow').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#white-green').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+            document.querySelector('#white-white').value = Math.round((Math.random() * 6 - 3) * 100) / 100
+
+            location.hash = createHash()
+            location.reload()
+        }
+
+        const multiply = (k) => {
+            document.querySelector('#red-red').value = Math.round(document.querySelector('#red-red').value * k * 100) / 100
+            document.querySelector('#red-yellow').value = Math.round(document.querySelector('#red-yellow').value * k * 100) / 100
+            document.querySelector('#red-green').value = Math.round(document.querySelector('#red-green').value * k * 100) / 100
+            document.querySelector('#red-white').value = Math.round(document.querySelector('#red-white').value * k * 100) / 100
+
+            document.querySelector('#yellow-red').value = Math.round(document.querySelector('#yellow-red').value  * k * 100) / 100
+            document.querySelector('#yellow-yellow').value = Math.round(document.querySelector('#yellow-yellow').value * k * 100) / 100
+            document.querySelector('#yellow-green').value = Math.round(document.querySelector('#yellow-green').value * k * 100) / 100
+            document.querySelector('#yellow-white').value = Math.round(document.querySelector('#yellow-white').value  * k * 100) / 100
+
+            document.querySelector('#green-red').value = Math.round(document.querySelector('#green-red').value  * k * 100) / 100
+            document.querySelector('#green-yellow').value = Math.round(document.querySelector('#green-yellow').value * k * 100) / 100
+            document.querySelector('#green-green').value = Math.round(document.querySelector('#green-green').value * k * 100) / 100
+            document.querySelector('#green-white').value = Math.round(document.querySelector('#green-white').value * k * 100) / 100
+
+            document.querySelector('#white-red').value = Math.round(document.querySelector('#white-red').value * k * 100) / 100
+            document.querySelector('#white-yellow').value = Math.round(document.querySelector('#white-yellow').value * k * 100) / 100
+            document.querySelector('#white-green').value = Math.round(document.querySelector('#white-green').value * k * 100) / 100
+            document.querySelector('#white-white').value = Math.round(document.querySelector('#white-white').value * k * 100) / 100
+
+            location.hash = createHash()
+            location.reload()
+        }
+
+        const switchValue = (selectorA, selectorB) => {
+            const tmp = document.querySelector(selectorA).value
+            document.querySelector(selectorA).value = document.querySelector(selectorB).value
+            document.querySelector(selectorB).value = tmp
+        }
+
+        const transpose = () => {
+            const RR = document.querySelector('#red-red').value
+            const RY = document.querySelector('#red-yellow').value
+            const RG = document.querySelector('#red-green').value
+            const RW = document.querySelector('#red-white').value
+
+            const YR = document.querySelector('#yellow-red').value
+            const YY = document.querySelector('#yellow-yellow').value
+            const YG = document.querySelector('#yellow-green').value
+            const YW = document.querySelector('#yellow-white').value
+
+            const GR = document.querySelector('#green-red').value
+            const GY = document.querySelector('#green-yellow').value
+            const GG = document.querySelector('#green-green').value
+            const GW = document.querySelector('#green-white').value
+
+            const WR = document.querySelector('#white-red').value
+            const WY = document.querySelector('#white-yellow').value
+            const WG = document.querySelector('#white-green').value
+            const WW = document.querySelector('#white-white').value
+
+
+            document.querySelector('#red-red').value = WR
+            document.querySelector('#red-yellow').value = GR
+            document.querySelector('#red-green').value = YR
+            document.querySelector('#red-white').value = RR
+
+            document.querySelector('#yellow-red').value = WY
+            document.querySelector('#yellow-yellow').value = GY
+            document.querySelector('#yellow-green').value = YY
+            document.querySelector('#yellow-white').value = RY
+
+            document.querySelector('#green-red').value = WG
+            document.querySelector('#green-yellow').value = GG
+            document.querySelector('#green-green').value = YG
+            document.querySelector('#green-white').value = RG
+
+            document.querySelector('#white-red').value = WW
+            document.querySelector('#white-yellow').value = GW
+            document.querySelector('#white-green').value = YW
+            document.querySelector('#white-white').value = RW
+
+            location.hash = createHash()
+            location.reload()
+        }
+
+    </script>
+</html>
