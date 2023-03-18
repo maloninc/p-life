@@ -15,6 +15,10 @@ Thanks to https://github.com/hunar4321/particle-life
 ## Live Demo
 https://maloninc.github.io/p-life/
 
+
+https://user-images.githubusercontent.com/15218/226088311-ee381582-a7df-4c34-9bdc-9130d71a87e5.mp4
+
+
 ## Example Pattern
 
 ![Example 1](images/particle-life-image-r-r=-0.35&r-y=0.34&r-g=-0.14&r-w=-0.16&y-r=-0.16&y-y=-0.14&y-g=-0.14&y-w=-0.15&g-r=-0.18&g-y=0.14&g-g=-0.18&g-w=0.37&w-r=-0.14&w-y=-0.14&w-g=-0.16&w-w=0.28.png?raw=true "Example 1")
